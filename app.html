@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoViz: Sorting & Graph Visualizer</title>
+    <style>
+        :root {
+            --bg-deep: #0b0f17;
+            --bg-card: #141b27;
+            --bg-surface: #1e293b;
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            padding-top: 90px;
+        }
+
+        /* PROFESSIONAL FIXED NAVIGATION BRANDING */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 75px;
+            background-color: rgba(20, 27, 39, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 3rem;
+            z-index: 1000;
+        }
+
+        .nav-brand {
+            font-weight: 800;
+            font-size: 1.6rem;
+            letter-spacing: -0.03rem;
+            background: linear-gradient(135deg, #ffffff, #3b82f6, #10b981);
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-links button.active, .nav-links button:hover {
+            color: #fff;
+            background-color: var(--primary);
+        }
+
+        /* ENTERPRISE HERO HEADER BLOCK */
+        .hero-section {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(11, 15, 23, 0.8));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 3.5rem 3rem;
+            margin-bottom: 2.5rem;
+            text-align: left;
+            box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.05);
+        }
+
+        .hero-section h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.05rem;
+            margin-bottom: 0.75rem;
+            color: #ffffff;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 0;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+
+        /* STRUCTURAL ARCHITECTURE */
+        .page-view {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem 3rem 2rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .page-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-layout { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+            margin-bottom: 2rem;
+        }
+
+        h2 { font-size: 1.3rem; margin-bottom: 1rem; color: #fff; display: flex; justify-content: space-between; align-items: center;}
+        p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+        /* FORM INPUTS & TRIGGERS */
+        label { display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; }
+        select, button.control-btn { width: 100%; padding: 0.8rem; background-color: var(--bg-surface); border: 1px solid var(--border); color: #fff; border-radius: 8px; font-size: 0.95rem; cursor: pointer; font-weight: 600; margin-bottom: 1rem; }
+        button.control-btn { background-color: var(--primary); border: none; }
+        button.control-btn:hover:not(:disabled) { background-color: #2563eb; }
+        button.secondary-btn { background-color: transparent; border: 1px solid var(--border); color: var(--text-main); width: 100%; padding: 0.8rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        button.secondary-btn:hover { background-color: var(--border); }
+
+        /* METRICS MODULE */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-box {
+            background-color: var(--bg-deep);
+            border: 1px solid var(--border);
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value { font-size: 1.2rem; font-weight: 700; color: var(--accent-green); }
+        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+
+        /* VISUALIZATION PORTS */
+        .sorting-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 320px;
+            background-color: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            gap: 4px;
+        }
+
+        .bar { flex: 1; background-color: var(--primary); border-radius: 2px 2px 0 0; }
+
+        .graph-container {
+            background-color: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            height: 400px;
+        }
+
+        svg { width: 100%; height: 100%; }
+        .edge { stroke: var(--border); stroke-width: 4; transition: stroke 0.3s; }
+        .edge.active { stroke: var(--accent-orange); stroke-width: 5; }
+        .node-circle { fill: var(--bg-surface); stroke: var(--primary); stroke-width: 3; transition: all 0.3s; }
+        .node-circle.visited { fill: rgba(139, 92, 246, 0.2); stroke: var(--accent-purple); }
+        .node-circle.current { fill: var(--accent-orange); stroke: #fff; transform: scale(1.1); }
+        .node-text { fill: #fff; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+
+        /* TELEMETRY ENGINE VIEWS */
+        .tracker-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .tracker-section { grid-template-columns: 1fr; }
+        }
+
+        .data-structure-visual {
+            background-color: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .structure-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .structure-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-grow: 1;
+            overflow-x: auto;
+            padding-bottom: 0.25rem;
+        }
+
+        .struct-node {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            font-weight: bold;
+            font-family: monospace;
+            min-width: 40px;
+            text-align: center;
+            animation: nodePush 0.2s ease-out;
+        }
+
+        @keyframes nodePush { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .terminal-log {
+            background-color: #05070b;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            height: 150px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-y: auto;
+            color: #34d399;
+            line-height: 1.4;
+        }
+
+        .log-entry { margin-bottom: 0.25rem; }
+        .log-entry.system { color: #60a5fa; }
+        .log-entry.alert { color: #fbbf24; }
+
+        /* DATA MATRIX TABLES */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: monospace;
+            text-align: center;
+        }
+        .matrix-table th, .matrix-table td {
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+        }
+        .matrix-table th { background-color: var(--bg-surface); }
+
+        table.info-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        table.info-table th, table.info-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+        code { background-color: rgba(0,0,0,0.3); padding: 0.2rem 0.4rem; border-radius: 4px; color: #f43f5e; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand">AlgoViz</div>
+        <ul class="nav-links">
+            <li><button id="btn-sort" class="active" onclick="switchView('sort')">Sorting Analyzer</button></li>
+            <li><button id="btn-graph" onclick="switchView('graph')">Graph Traversal Engine</button></li>
+        </ul>
+    </nav>
+
+    <div id="view-sorting" class="page-view active">
+        <div class="hero-section">
+            <h1>AlgoViz: Sorting Analyzer</h1>
+            <p>An enterprise-grade execution platform providing real-time comparative evaluation of sequential array sorting mechanisms and structural mutation behaviors.</p>
+        </div>
+
+        <div class="dashboard-layout">
+            <div class="card" style="height: fit-content;">
+                <h2>Sorting Controls</h2>
+                
+                <div class="metrics-grid">
+                    <div class="metric-box"><div class="metric-value" id="meta-comparisons">0</div><div class="metric-label">Comparisons</div></div>
+                    <div class="metric-box"><div class="metric-value" id="meta-swaps">0</div><div class="metric-label">Swaps / Writes</div></div>
+                </div>
+                <div class="metrics-grid" style="grid-template-columns: 1fr; margin-bottom: 1.5rem;">
+                    <div class="metric-box"><div class="metric-value" id="meta-inversions" style="color: var(--accent-orange);">0</div><div class="metric-label">Array Inversion Index</div></div>
+                </div>
+
+                <label for="sortSelect">Target Logic</label>
+                <select id="sortSelect">
+                    <option value="merge">Merge Sort (Divide & Conquer)</option>
+                    <option value="quick">Quick Sort (Pivot Partition)</option>
+                </select>
+
+                <button class="control-btn" id="runSortBtn" onclick="executeSortingAnalysis()">Run Sorting Engine</button>
+                <button class="secondary-btn" onclick="generateRandomArray()">Generate Random Array</button>
+            </div>
+
+            <div>
+                <div class="card">
+                    <h2>Array State Viewport</h2>
+                    <div class="sorting-container" id="bar-viewport"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Complexity Performance Analysis</h2>
+                    <table class="info-table">
+                        <thead>
+                            <tr><th>Algorithm</th><th>Time (Average)</th><th>Algorithmic Approach</th><th>Stability Property</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Merge Sort</strong></td><td><code>O(n log n)</code></td><td>Divide and Conquer (External)</td><td><strong>Stable</strong></td></tr>
+                            <tr><td><strong>Quick Sort</strong></td><td><code>O(n log n)</code></td><td>Partitioning / Pivot Choices</td><td><strong>Unstable</strong></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-graph" class="page-view">
+        <div class="hero-section">
+            <h1>AlgoViz: Graph Traversal Engine</h1>
+            <p>Interactive graph analytical workspace executing synchronized state machine traversals via Breadth-First (Queue) and Depth-First (Stack) architectures.</p>
+        </div>
+
+        <div class="dashboard-layout">
+            <div class="card" style="height: fit-content;">
+                <h2>Graph Search Controls</h2>
+                
+                <div class="metrics-grid">
+                    <div class="metric-box"><div class="metric-value">7</div><div class="metric-label">Vertices (V)</div></div>
+                    <div class="metric-box"><div class="metric-value">8</div><div class="metric-label">Edges (E)</div></div>
+                </div>
+                <div class="metrics-grid" style="grid-template-columns: 1fr; margin-bottom: 1.5rem;">
+                    <div class="metric-box"><div class="metric-value" style="color: var(--primary);">0.38</div><div class="metric-label">Graph Density ($2E / V(V-1)$)</div></div>
+                </div>
+
+                <label for="graphSelect">Target Explorer</label>
+                <select id="graphSelect">
+                    <option value="bfs">Breadth-First Search (BFS)</option>
+                    <option value="dfs">Depth-First Search (DFS)</option>
+                </select>
+
+                <button class="control-btn" id="runGraphBtn" onclick="executeGraphSearch()">Execute Graph Traversal</button>
+                <button class="secondary-btn" onclick="resetGraphVisuals()">Reset Explorer States</button>
+            </div>
+
+            <div>
+                <div class="tracker-section">
+                    <div class="data-structure-visual">
+                        <div class="structure-title" id="struct-title">Working Memory Structure</div>
+                        <div class="structure-container" id="struct-container">
+                            <span style="color: var(--text-muted); font-style: italic; font-size: 0.85rem;">Structure empty</span>
+                        </div>
+                    </div>
+                    <div class="terminal-log" id="terminal-log">
+                        <div class="log-entry system">[SYSTEM]: Terminal initialized. Ready for execution.</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Network Topology Workspace</h2>
+                    <div class="graph-container">
+                        <svg id="network-svg"></svg>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Graph Traversal Asymptotic Complexities</h2>
+                    <p>Mathematical profiles defining bounds where $V = \text{Vertices}$ and $E = \text{Edges}$ across node-edge arrays.</p>
+                    <table class="info-table">
+                        <thead>
+                            <tr>
+                                <th>Search Engine</th>
+                                <th>Best Case Time</th>
+                                <th>Average Case Time</th>
+                                <th>Worst Case Time</th>
+                                <th>Space Complexity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>BFS (Queue-Driven)</strong></td>
+                                <td><code>O(1)</code> <br><small style="color:var(--text-muted)">Target is root node</small></td>
+                                <td><code>O(V + E)</code> <br><small style="color:var(--text-muted)">Standard sparse parsing</small></td>
+                                <td><code>O(V + E)</code> <br><small style="color:var(--text-muted)">Full connection scan</small></td>
+                                <td><code>O(V)</code> <br><small style="color:var(--text-muted)">Max queue allocation</small></td>
+                            </tr>
+                            <tr>
+                                <td><strong>DFS (Stack-Driven)</strong></td>
+                                <td><code>O(1)</code> <br><small style="color:var(--text-muted)">Target is root node</small></td>
+                                <td><code>O(V + E)</code> <br><small style="color:var(--text-muted)">Standard tree traversal</small></td>
+                                <td><code>O(V + E)</code> <br><small style="color:var(--text-muted)">Linear line sequence graph</small></td>
+                                <td><code>O(V)</code> <br><small style="color:var(--text-muted)">Max recursive depth</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h2>Topology Matrix Representation (Adjacency Matrix)</h2>
+                    <table class="matrix-table" id="matrix-output"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchView(viewType) {
+            document.querySelectorAll('.page-view').forEach(view => view.classList.remove('active'));
+            document.querySelectorAll('.nav-links button').forEach(btn => btn.classList.remove('active'));
+
+            if (viewType === 'sort') {
+                document.getElementById('view-sorting').classList.add('active');
+                document.getElementById('btn-sort').classList.add('active');
+            } else {
+                document.getElementById('view-graph').classList.add('active');
+                document.getElementById('btn-graph').classList.add('active');
+                initNetworkTopology();
+            }
+        }
+
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+        const varColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+        // ==========================================
+        // MODULE 1: SORTING ENGINE
+        // ==========================================
+        const ARRAY_SIZE = 35;
+        let workingArray = [];
+        let comparisonsCount = 0;
+        let swapsCount = 0;
+
+        function updateSortMetrics() {
+            document.getElementById('meta-comparisons').innerText = comparisonsCount;
+            document.getElementById('meta-swaps').innerText = swapsCount;
+        }
+
+        function calculateInversionIndex(arr) {
+            let invCount = 0;
+            for (let i = 0; i < arr.length - 1; i++) {
+                for (let j = i + 1; j < arr.length; j++) {
+                    if (arr[i] > arr[j]) invCount++;
+                }
+            }
+            return invCount;
+        }
+
+        function generateRandomArray() {
+            workingArray = [];
+            comparisonsCount = 0;
+            swapsCount = 0;
+            updateSortMetrics();
+            const viewport = document.getElementById('bar-viewport');
+            viewport.innerHTML = '';
+            
+            for (let i = 0; i < ARRAY_SIZE; i++) {
+                workingArray.push(Math.floor(Math.random() * 260) + 20);
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = `${workingArray[i]}px`;
+                viewport.appendChild(bar);
+            }
+            document.getElementById('meta-inversions').innerText = calculateInversionIndex(workingArray);
+        }
+
+        async function executeSortingAnalysis() {
+            document.getElementById('runSortBtn').disabled = true;
+            comparisonsCount = 0; swapsCount = 0; updateSortMetrics();
+            const bars = document.getElementsByClassName('bar');
+            const selection = document.getElementById('sortSelect').value;
+            let tempArray = [...workingArray];
+
+            if (selection === 'merge') {
+                await mergeSortSlice(tempArray, 0, tempArray.length - 1, bars);
+            } else {
+                await quickSortSlice(tempArray, 0, tempArray.length - 1, bars);
+            }
+            document.getElementById('meta-inversions').innerText = calculateInversionIndex(tempArray);
+            document.getElementById('runSortBtn').disabled = false;
+        }
+
+        async function mergeSortSlice(arr, start, end, bars) {
+            if (start >= end) return;
+            let mid = Math.floor((start + end) / 2);
+            await mergeSortSlice(arr, start, mid, bars);
+            await mergeSortSlice(arr, mid + 1, end, bars);
+            await mergeMergeAction(arr, start, mid, end, bars);
+        }
+
+        async function mergeMergeAction(arr, start, mid, end, bars) {
+            let left = arr.slice(start, mid + 1);
+            let right = arr.slice(mid + 1, end + 1);
+            let i = 0, j = 0, k = start;
+
+            while (i < left.length && j < right.length) {
+                comparisonsCount++;
+                bars[k].style.backgroundColor = varColor('--accent-orange');
+                await sleep(20);
+                
+                if (left[i] <= right[j]) {
+                    arr[k] = left[i];
+                    bars[k].style.height = `${left[i]}px`;
+                    swapsCount++;
+                    i++;
+                } else {
+                    arr[k] = right[j];
+                    bars[k].style.height = `${right[j]}px`;
+                    swapsCount++;
+                    j++;
+                }
+                bars[k].style.backgroundColor = varColor('--primary');
+                updateSortMetrics();
+                k++;
+            }
+
+            while (i < left.length) {
+                arr[k] = left[i];
+                bars[k].style.height = `${left[i]}px`;
+                swapsCount++; i++; k++;
+                updateSortMetrics();
+            }
+            while (j < right.length) {
+                arr[k] = right[j];
+                bars[k].style.height = `${right[j]}px`;
+                swapsCount++; j++; k++;
+                updateSortMetrics();
+            }
+        }
+
+        async function quickSortSlice(arr, low, high, bars) {
+            if (low < high) {
+                let pivotIdx = await partitionAction(arr, low, high, bars);
+                await quickSortSlice(arr, low, pivotIdx - 1, bars);
+                await quickSortSlice(arr, pivotIdx + 1, high, bars);
+            }
+        }
+
+        async function partitionAction(arr, low, high, bars) {
+            let pivot = arr[high];
+            bars[high].style.backgroundColor = varColor('--accent-red');
+            let i = low - 1;
+
+            for (let j = low; j < high; j++) {
+                comparisonsCount++;
+                bars[j].style.backgroundColor = varColor('--accent-orange');
+                await sleep(25);
+                
+                if (arr[j] < pivot) {
+                    i++;
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                    swapsCount++;
+                    bars[i].style.height = `${arr[i]}px`;
+                    bars[j].style.height = `${arr[j]}px`;
+                }
+                bars[j].style.backgroundColor = varColor('--primary');
+                updateSortMetrics();
+            }
+            [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+            swapsCount++;
+            bars[i + 1].style.height = `${arr[i + 1]}px`;
+            bars[high].style.height = `${arr[high]}px`;
+            bars[high].style.backgroundColor = varColor('--primary');
+            updateSortMetrics();
+            return i + 1;
+        }
+
+        // ==========================================
+        // MODULE 2: NETWORKING GRAPHS 
+        // ==========================================
+        const svgCanvas = document.getElementById('network-svg');
+        const structContainer = document.getElementById('struct-container');
+        const terminalLog = document.getElementById('terminal-log');
+        
+        let graphData = {
+            nodes: [
+                { id: 'A', x: 80, y: 200 }, { id: 'B', x: 220, y: 90 }, { id: 'C', x: 220, y: 310 },
+                { id: 'D', x: 420, y: 90 }, { id: 'E', x: 420, y: 310 }, { id: 'F', x: 580, y: 200 },
+                { id: 'G', x: 720, y: 200 }
+            ],
+            edges: [
+                { u: 'A', v: 'B' }, { u: 'A', v: 'C' }, { u: 'B', v: 'D' }, { u: 'B', v: 'C' },
+                { u: 'C', v: 'E' }, { u: 'D', v: 'F' }, { u: 'E', v: 'F' }, { u: 'F', v: 'G' }
+            ]
+        };
+
+        let adjList = {};
+
+        function initNetworkTopology() {
+            svgCanvas.innerHTML = '';
+            adjList = {};
+            graphData.nodes.forEach(n => adjList[n.id] = []);
+
+            graphData.edges.forEach(edge => {
+                adjList[edge.u].push(edge.v);
+                adjList[edge.v].push(edge.u);
+            });
+            for (let id in adjList) {
+                adjList[id].sort();
+            }
+
+            graphData.edges.forEach(edge => {
+                const uN = graphData.nodes.find(n => n.id === edge.u);
+                const vN = graphData.nodes.find(n => n.id === edge.v);
+
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", uN.x); line.setAttribute("y1", uN.y);
+                line.setAttribute("x2", vN.x); line.setAttribute("y2", vN.y);
+                line.setAttribute("class", "edge");
+                line.setAttribute("id", `edge-${edge.u}-${edge.v}`);
+                svgCanvas.appendChild(line);
+            });
+
+            graphData.nodes.forEach(node => {
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("id", `node-${node.id}`);
+
+                const circ = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circ.setAttribute("cx", node.x); circ.setAttribute("cy", node.y); circ.setAttribute("r", 22);
+                circ.setAttribute("class", "node-circle");
+
+                const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                txt.setAttribute("x", node.x); txt.setAttribute("y", node.y);
+                txt.setAttribute("class", "node-text");
+                txt.textContent = node.id;
+
+                g.appendChild(circ); g.appendChild(txt);
+                svgCanvas.appendChild(g);
+            });
+
+            buildAdjacencyMatrix();
+        }
+
+        function buildAdjacencyMatrix() {
+            const table = document.getElementById('matrix-output');
+            const ids = graphData.nodes.map(n => n.id);
+            let html = `<tr><th>-</th>${ids.map(id => `<th>${id}</th>`).join('')}</tr>`;
+            
+            ids.forEach(rowId => {
+                html += `<tr><th>${rowId}</th>`;
+                ids.forEach(colId => {
+                    let connected = adjList[rowId].includes(colId) ? 1 : 0;
+                    html += `<td style="color:${connected ? 'var(--accent-green)' : 'var(--text-muted)'}">${connected}</td>`;
+                });
+                html += '</tr>';
+            });
+            table.innerHTML = html;
+        }
+
+        function resetGraphVisuals() {
+            document.querySelectorAll('.node-circle').forEach(c => c.className.baseVal = 'node-circle');
+            document.querySelectorAll('.edge').forEach(e => e.className.baseVal = 'edge');
+            structContainer.innerHTML = `<span style="color:var(--text-muted); font-style:italic; font-size:0.85rem;">Structure empty</span>`;
+            terminalLog.innerHTML = `<div class="log-entry system">[SYSTEM]: Environment reset. Awaiting instructions.</div>`;
+            document.getElementById('runGraphBtn').disabled = false;
+        }
+
+        function updateStructureUI(elements) {
+            if(elements.length === 0) {
+                structContainer.innerHTML = `<span style="color:var(--text-muted); font-style:italic; font-size:0.85rem;">Structure empty</span>`;
+                return;
+            }
+            structContainer.innerHTML = elements.map(el => `<div class="struct-node">${el}</div>`).join('');
+        }
+
+        function addLogEntry(text, type = 'normal') {
+            const el = document.createElement('div');
+            el.className = `log-entry ${type}`;
+            el.innerText = `> ${text}`;
+            terminalLog.appendChild(el);
+            terminalLog.scrollTop = terminalLog.scrollHeight;
+        }
+
+        async function executeGraphSearch() {
+            resetGraphVisuals();
+            document.getElementById('runGraphBtn').disabled = true;
+            const engine = document.getElementById('graphSelect').value;
+
+            if (engine === 'bfs') {
+                document.getElementById('struct-title').innerText = "Active FIFO Queue (BFS)";
+                addLogEntry("Starting Breadth-First Search from Node A", "system");
+                await runGraphBFS('A');
+            } else {
+                document.getElementById('struct-title').innerText = "Active Execution Stack (DFS)";
+                addLogEntry("Starting Depth-First Search from Node A", "system");
+                let visited = new Set();
+                let mockStack = ['A'];
+                updateStructureUI(mockStack);
+                await runGraphDFS('A', visited, mockStack);
+            }
+            addLogEntry("Traversal complete.", "system");
+            document.getElementById('runGraphBtn').disabled = false;
+        }
+
+        async function runGraphBFS(startId) {
+            let queue = [startId];
+            let visited = new Set([startId]);
+
+            while(queue.length > 0) {
+                updateStructureUI(queue);
+                let curr = queue.shift();
+                
+                addLogEntry(`Popped Node ${curr} from Queue.`, 'alert');
+                const circle = document.querySelector(`#node-${curr} circle`);
+                circle.className.baseVal = 'node-circle current';
+                await sleep(700);
+                circle.className.baseVal = 'node-circle visited';
+
+                for(let neighbor of adjList[curr]) {
+                    if(!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        addLogEntry(`Discovered unvisited neighbor: ${neighbor}. Pushing to Queue.`);
+                        let edge = document.getElementById(`edge-${curr}-${neighbor}`) || document.getElementById(`edge-${neighbor}-${curr}`);
+                        if(edge) edge.className.baseVal = 'edge active';
+                        
+                        queue.push(neighbor);
+                        updateStructureUI(queue);
+                        await sleep(400);
+                    }
+                }
+            }
+            updateStructureUI([]);
+        }
+
+        async function runGraphDFS(nodeId, visited, mockStack) {
+            visited.add(nodeId);
+            addLogEntry(`Executing stack frame for Node ${nodeId}.`, 'alert');
+            const circle = document.querySelector(`#node-${nodeId} circle`);
+            circle.className.baseVal = 'node-circle current';
+            await sleep(700);
+            circle.className.baseVal = 'node-circle visited';
+
+            for(let neighbor of adjList[nodeId]) {
+                if(!visited.has(neighbor)) {
+                    addLogEntry(`Moving down edge to unvisited neighbor: ${neighbor}`);
+                    let edge = document.getElementById(`edge-${nodeId}-${neighbor}`) || document.getElementById(`edge-${neighbor}-${nodeId}`);
+                    if(edge) edge.className.baseVal = 'edge active';
+                    
+                    mockStack.push(neighbor);
+                    updateStructureUI(mockStack);
+                    await sleep(400);
+                    
+                    await runGraphDFS(neighbor, visited, mockStack);
+                    
+                    circle.className.baseVal = 'node-circle current';
+                    addLogEntry(`Backtracking to Node ${nodeId}.`, 'alert');
+                    await sleep(300);
+                    circle.className.baseVal = 'node-circle visited';
+                }
+            }
+            mockStack.pop();
+            updateStructureUI(mockStack);
+        }
+
+        generateRandomArray();
+    </script>
+</body>
+</html>
